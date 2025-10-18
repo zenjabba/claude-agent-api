@@ -276,8 +276,29 @@ class ClaudeAPIHandler(BaseHTTPRequestHandler):
             })
         elif self.path.startswith('/usage'):
             self._handle_usage_report()
+        elif self.path == '/':
+            self._send_json_response(200, {
+                'name': 'Claude Agent API',
+                'version': '1.0.0',
+                'endpoints': {
+                    'GET /health': 'Health check',
+                    'POST /query': 'Send queries to Claude (requires api_key)',
+                    'GET /usage?api_key=XXX': 'View usage statistics'
+                },
+                'documentation': 'https://github.com/zenjabba/claude-agent-api'
+            })
         else:
             self._send_json_response(404, {'error': 'Not found'})
+
+    def do_HEAD(self):
+        # Handle HEAD requests (used by monitoring tools)
+        if self.path == '/health' or self.path == '/':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+        else:
+            self.send_response(404)
+            self.end_headers()
 
     def do_POST(self):
         if self.path == '/query':
