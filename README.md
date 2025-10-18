@@ -12,32 +12,16 @@ curl -sSL https://raw.githubusercontent.com/zenjabba/claude-agent-api/main/insta
 
 ## Features
 
-- 🐳 **Docker-only** - Simple, consistent deployment
-- 🔄 **Auto-refresh** - OAuth tokens renew automatically
-- 🔒 **Secure** - Tokens stored in Docker volumes
-- 🚀 **Simple API** - RESTful endpoints for Claude
-- 🏗️ **Multi-arch** - Supports AMD64 and ARM64
+- **Docker-only** - Simple, consistent deployment
+- **Auto-refresh** - OAuth tokens renew automatically
+- **Secure** - Tokens stored in Docker volumes
+- **Simple API** - RESTful endpoints for Claude
+- **Multi-arch** - Supports AMD64 and ARM64
 
 ## Quick Start
 
 ```bash
-# One-line install
 curl -sSL https://raw.githubusercontent.com/zenjabba/claude-agent-api/main/install.sh | bash
-
-# Or manual Docker run
-docker run -it --rm \
-  -v claude-data:/data \
-  -p 8787:8787 \
-  zenjabba/claude-agent-api:latest \
-  python3 oauth_setup.py
-
-# Then run the container
-docker run -d \
-  -v claude-data:/data \
-  -p 8787:8787 \
-  --name claude-agent \
-  --restart unless-stopped \
-  zenjabba/claude-agent-api:latest
 ```
 
 ## API Usage
@@ -73,8 +57,6 @@ Tokens are stored in a Docker volume and automatically refresh.
 ## Docker Compose
 
 ```yaml
-version: '3.8'
-
 services:
   claude-agent:
     image: zenjabba/claude-agent-api:latest
@@ -101,24 +83,6 @@ docker-compose pull
 
 # Restart container
 docker-compose up -d
-```
-
-## Building from Source
-
-```bash
-# Clone repository
-git clone https://github.com/zenjabba/claude-agent-api.git
-cd claude-agent-api
-
-# Build image
-docker build -t claude-agent-api .
-
-# Run with local image
-docker run -d \
-  -v claude-data:/data \
-  -p 8787:8787 \
-  --name claude-agent \
-  claude-agent-api
 ```
 
 ## License
