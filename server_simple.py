@@ -493,17 +493,23 @@ class ClaudeAPIHandler(BaseHTTPRequestHandler):
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Claude Agent API</title>
+    <meta name="description" content="Simple HTTP API server for Claude with OAuth token support, API key authentication, and usage tracking.">
 
-    <!-- Open Graph / Social Media -->
+    <!-- Open Graph / Facebook / Slack / RocketChat -->
     <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Claude Agent API">
     <meta property="og:title" content="Claude Agent API">
-    <meta property="og:description" content="Simple HTTP API server for Claude with OAuth token support, API key authentication, and usage tracking.">
+    <meta property="og:description" content="Simple HTTP API server for Claude with OAuth token support, API key authentication, and usage tracking. Send queries via POST /query endpoint.">
     <meta property="og:url" content="https://claude.digitalmonks.org">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Claude Agent API">
-    <meta name="twitter:description" content="Simple HTTP API server for Claude with OAuth token support">
+    <meta name="twitter:description" content="HTTP API server for Claude with OAuth token support and usage tracking.">
+
+    <!-- Slack / RocketChat specific -->
+    <meta name="slack-app-id" content="claude-agent-api">
+    <link rel="canonical" href="https://claude.digitalmonks.org">
 
     <style>
         body {
