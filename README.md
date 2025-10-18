@@ -36,6 +36,11 @@ curl http://localhost:8787/health
 curl -X POST http://localhost:8787/query \
   -H "Content-Type: application/json" \
   -d '{"query": "What is the meaning of life?"}'
+
+# Specify a model (optional, uses default from setup)
+curl -X POST http://localhost:8787/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Hello", "model": "claude-3-haiku-20240307"}'
 ```
 
 ### Execute Command (Optional)
@@ -47,12 +52,15 @@ curl -X POST http://localhost:8787/execute \
 
 ## OAuth Setup
 
-On first run, you'll need to authenticate with Claude. The setup script provides two options:
+On first run, you'll need to authenticate with Claude using a Claude CLI token:
 
-1. **Manual OAuth Flow** - Get a URL, authenticate on any device, paste code back
-2. **Remote Setup** - Copy existing tokens from another installation
+1. Install Claude CLI: `npm install -g @anthropic/claude-code`
+2. Run: `claude setup-token`
+3. Copy the generated token (starts with `sk-ant-oat01-`)
+4. Paste the token when prompted during setup
 
-Tokens are stored in a Docker volume and automatically refresh.
+The setup will test your token, show available models, and let you choose a default model.
+Tokens are stored in a Docker volume.
 
 ## Docker Compose
 

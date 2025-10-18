@@ -5,6 +5,7 @@ import sys
 import json
 import subprocess
 import logging
+from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse
 from datetime import datetime
@@ -31,6 +32,18 @@ logger = logging.getLogger(__name__)
 if not TOKEN:
     logger.error('Error: CLAUDE_CODE_OAUTH_TOKEN environment variable is not set')
     sys.exit(1)
+
+# Load default model from config
+DEFAULT_MODEL = 'claude-3-opus-20240229'
+config_file = Path('/data/.config.json') if Path('/data').exists() else Path('.config.json')
+if config_file.exists():
+    try:
+        with open(config_file, 'r') as f:
+            config = json.load(f)
+            DEFAULT_MODEL = config.get('default_model', DEFAULT_MODEL)
+            logger.info(f'Loaded default model from config: {DEFAULT_MODEL}')
+    except Exception as e:
+        logger.warning(f'Could not load config: {e}')
 
 # Initialize Claude client
 anthropic = Anthropic(api_key=TOKEN)
@@ -89,9 +102,12 @@ class ClaudeAPIHandler(BaseHTTPRequestHandler):
             
             logger.info(f"Processing query: {prompt}")
             
+            # Get model from request or use default
+            model = body.get('model', DEFAULT_MODEL)
+            
             # Call Claude API
             message = anthropic.messages.create(
-                model='claude-3-opus-20240229',
+                model=model,
                 max_tokens=4096,
                 messages=[{
                     'role': 'user',
