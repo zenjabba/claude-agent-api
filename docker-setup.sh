@@ -51,16 +51,32 @@ else
     echo -e "${YELLOW}OAuth setup required${NC}"
     echo ""
     
-    # Run OAuth setup inside Docker container
-    echo "Starting OAuth setup..."
-    docker run -it --rm \
-        -v "$(pwd)/data:/data" \
-        zenjabba/claude-agent-api:latest \
-        python3 oauth_setup.py
-    
-    if [ ! -f "./data/.vars" ]; then
-        echo -e "${RED}OAuth setup was not completed${NC}"
-        exit 1
+    # Check if we have a TTY
+    if [ -t 0 ]; then
+        # Interactive mode - run OAuth setup
+        echo "Starting OAuth setup..."
+        docker run -it --rm \
+            -v "$(pwd)/data:/data" \
+            zenjabba/claude-agent-api:latest \
+            python3 oauth_setup.py
+        
+        if [ ! -f "./data/.vars" ]; then
+            echo -e "${RED}OAuth setup was not completed${NC}"
+            exit 1
+        fi
+    else
+        # Non-interactive mode - show instructions
+        echo "OAuth setup requires interactive input."
+        echo ""
+        echo "Please run the following command to set up OAuth:"
+        echo ""
+        echo "  docker run -it --rm -v $(pwd)/data:/data zenjabba/claude-agent-api:latest python3 oauth_setup.py"
+        echo ""
+        echo "Then start the service with:"
+        echo ""
+        echo "  docker-compose up -d"
+        echo ""
+        exit 0
     fi
 fi
 
