@@ -29,7 +29,9 @@ class HeadlessOAuthSetup:
     def __init__(self):
         # Use Claude's official OAuth client ID
         self.client_id = '9d1c250a-e61b-44d9-88ed-5944d1962f5e'
-        self.redirect_uri = 'http://localhost:8899/callback'
+        # Two redirect options: localhost for automated flow, or console for manual code display
+        self.redirect_uri_local = 'http://localhost:8899/callback'
+        self.redirect_uri_console = 'https://console.anthropic.com/oauth/code/callback'
         self.auth_endpoint = 'https://claude.ai/oauth/authorize'
         self.token_endpoint = 'https://claude.ai/api/oauth/token'
 
@@ -42,17 +44,24 @@ class HeadlessOAuthSetup:
         
         return verifier, challenge
 
-    def generate_auth_url(self, challenge, state):
+    def generate_auth_url(self, challenge, state, redirect_uri=None, code_display=False):
         """Generate the authorization URL"""
+        if redirect_uri is None:
+            redirect_uri = self.redirect_uri_local
+            
         params = {
-            'response_type': 'code',
             'client_id': self.client_id,
-            'redirect_uri': self.redirect_uri,
+            'response_type': 'code',
+            'redirect_uri': redirect_uri,
+            'scope': 'user:inference',
             'code_challenge': challenge,
             'code_challenge_method': 'S256',
-            'state': state,
-            'scope': 'user:inference user:profile'
+            'state': state
         }
+        
+        # Add code=true for browser display mode
+        if code_display:
+            params = {'code': 'true', **params}
         
         if HAS_REQUESTS:
             from urllib.parse import urlencode
@@ -60,12 +69,15 @@ class HeadlessOAuthSetup:
         else:
             return f"{self.auth_endpoint}?{urllib.parse.urlencode(params)}"
 
-    def exchange_code_for_token(self, code, verifier):
+    def exchange_code_for_token(self, code, verifier, redirect_uri=None):
         """Exchange authorization code for tokens"""
+        if redirect_uri is None:
+            redirect_uri = self.redirect_uri_local
+            
         data = {
             'grant_type': 'authorization_code',
             'code': code,
-            'redirect_uri': self.redirect_uri,
+            'redirect_uri': redirect_uri,
             'client_id': self.client_id,
             'code_verifier': verifier
         }
@@ -109,14 +121,47 @@ class HeadlessOAuthSetup:
         if tokens['refresh_token']:
             print("  Refresh token saved for automatic renewal")
 
+    def browser_code_display_flow(self):
+        """OAuth flow that displays code in browser (like Claude CLI)"""
+        verifier, challenge = self.generate_pkce()
+        state = secrets.token_hex(16)
+        auth_url = self.generate_auth_url(
+            challenge, state, 
+            redirect_uri=self.redirect_uri_console,
+            code_display=True
+        )
+        
+        print("\n=== Claude OAuth Setup (Browser Code Display) ===\n")
+        print("This method displays the authorization code in your browser.\n")
+        print("1. Copy this URL and open it in a browser:")
+        print(f"\n{auth_url}\n")
+        print("2. Sign in to Claude and authorize the application")
+        print("3. The authorization code will be displayed in the browser")
+        print("4. Copy the authorization code\n")
+        
+        code = input("Paste the authorization code here: ").strip()
+        
+        if not code:
+            raise Exception("No authorization code provided")
+        
+        print("\nAuthorization code received!")
+        print("  Exchanging for tokens...")
+        
+        tokens = self.exchange_code_for_token(code, verifier, self.redirect_uri_console)
+        self.save_tokens(tokens)
+        
+        return tokens
+
     def manual_oauth_flow(self):
         """Manual OAuth flow for headless environments"""
         verifier, challenge = self.generate_pkce()
         state = secrets.token_hex(16)
         auth_url = self.generate_auth_url(challenge, state)
         
-        print("\n=== Claude OAuth Setup ===\n")
-        print("Since no browser is available, please follow these steps:\n")
+        print("\n=== Claude OAuth Setup (Localhost Callback) ===\n")
+        print("IMPORTANT: Due to Cloudflare protection, the automated token exchange may fail.")
+        print("If you encounter issues, try option 2 (Browser Code Display) instead.\n")
+        print("To proceed with localhost callback setup:\n")
         print("1. Copy this URL and open it in a browser on any device:")
         print(f"\n{auth_url}\n")
         print("2. Sign in to Claude and authorize the application")
@@ -198,25 +243,55 @@ class HeadlessOAuthSetup:
             print("  - .vars")
             return False
 
+    def claude_cli_token_setup(self):
+        """Setup using Claude CLI generated token"""
+        print("\n=== Claude CLI Token Setup ===\n")
+        print("This method uses a long-lived token generated by the Claude CLI.\n")
+        print("Prerequisites:")
+        print("1. Install Claude CLI: npm install -g @anthropic/claude-code")
+        print("2. Run: claude setup-token")
+        print("3. Copy the generated token\n")
+        
+        token = input("Paste your Claude token here: ").strip()
+        
+        if not token:
+            print("\nNo token provided")
+            return False
+        
+        # Save token using TokenManager
+        manager = TokenManager()
+        manager.setup_from_oauth_token(token)
+        
+        print("\nToken saved successfully!")
+        print("Note: This token will need manual renewal when it expires.")
+        return True
+
     def run(self):
         """Main menu for headless setup"""
         print("\n=== Claude OAuth Setup ===\n")
         print("Choose your setup method:\n")
-        print("1. Manual OAuth flow (authenticate via browser on another device)")
-        print("2. Remote setup (copy tokens from another machine)")
-        print("3. Exit\n")
+        print("1. Localhost callback (may fail due to Cloudflare protection)")
+        print("2. Browser code display (recommended - like Claude CLI)")
+        print("3. Remote setup (copy tokens from another machine)")
+        print("4. Use Claude CLI token")
+        print("5. Exit\n")
         
-        choice = input("Enter your choice (1-3): ").strip()
+        choice = input("Enter your choice (1-5): ").strip()
         
         try:
             if choice == '1':
                 self.manual_oauth_flow()
                 print("\nOAuth setup complete with auto-refresh enabled!")
             elif choice == '2':
+                self.browser_code_display_flow()
+                print("\nOAuth setup complete with auto-refresh enabled!")
+            elif choice == '3':
                 success = self.remote_setup_instructions()
                 if success:
                     print("\nRemote setup complete!")
-            elif choice == '3':
+            elif choice == '4':
+                self.claude_cli_token_setup()
+            elif choice == '5':
                 print("\nExiting...")
                 sys.exit(0)
             else:
@@ -224,6 +299,13 @@ class HeadlessOAuthSetup:
                 sys.exit(1)
         except Exception as e:
             print(f"\nSetup failed: {e}")
+            if "403" in str(e) or "Cloudflare" in str(e) or "Just a moment" in str(e):
+                print("\nThis appears to be a Cloudflare protection issue.")
+                print("\nRecommended alternative: Use the Claude CLI to generate a long-lived token:")
+                print("1. Install Claude CLI: npm install -g @anthropic/claude-code")
+                print("2. Run: claude setup-token")
+                print("3. Copy the generated token")
+                print("4. Use the token with this API\n")
             sys.exit(1)
 
 def main():
