@@ -2,6 +2,10 @@
 
 Simple HTTP API server for Claude, distributed as a Docker container.
 
+```bash
+curl -sSL https://raw.githubusercontent.com/zenjabba/claude-agent-api/main/install.sh | bash
+```
+
 [![Docker Pulls](https://img.shields.io/docker/pulls/zenjabba/claude-agent-api)](https://hub.docker.com/r/zenjabba/claude-agent-api)
 [![Docker Image Size](https://img.shields.io/docker/image-size/zenjabba/claude-agent-api)](https://hub.docker.com/r/zenjabba/claude-agent-api)
 [![Build Status](https://github.com/zenjabba/claude-agent-api/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/zenjabba/claude-agent-api/actions)
@@ -17,13 +21,10 @@ Simple HTTP API server for Claude, distributed as a Docker container.
 ## Quick Start
 
 ```bash
-# Option 1: Using docker-compose (recommended)
-curl -O https://raw.githubusercontent.com/zenjabba/claude-agent-api/main/docker-compose.yml
-curl -O https://raw.githubusercontent.com/zenjabba/claude-agent-api/main/docker-setup.sh
-chmod +x docker-setup.sh
-./docker-setup.sh
+# One-line install
+curl -sSL https://raw.githubusercontent.com/zenjabba/claude-agent-api/main/install.sh | bash
 
-# Option 2: Direct Docker run
+# Or manual Docker run
 docker run -it --rm \
   -v claude-data:/data \
   -p 8787:8787 \
