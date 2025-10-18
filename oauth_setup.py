@@ -20,6 +20,11 @@ except ImportError:
 
 from token_manager import TokenManager
 
+# Ensure we use /data directory when running in Docker
+if os.path.exists('/data') and os.access('/data', os.W_OK):
+    import token_manager
+    token_manager.DATA_DIR_OVERRIDE = Path('/data')
+
 class HeadlessOAuthSetup:
     def __init__(self):
         self.client_id = 'anthropic-oauth-cli'
