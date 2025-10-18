@@ -15,27 +15,28 @@ echo ""
 
 # Check if Claude CLI is installed
 if ! command -v claude &> /dev/null; then
-    echo "Claude CLI not found. Installing..."
-    npm install -g @anthropic-ai/claude-code
+    echo "Claude CLI not found."
+    echo ""
+    echo "To install Claude CLI, run:"
+    echo "  npm install -g @anthropic-ai/claude-code"
+    echo ""
+    echo "Or continue without it and paste your existing token below."
     echo ""
 fi
 
-# Run OAuth setup
-echo "Setting up Claude OAuth token..."
-echo "This will open a browser window for authentication."
-echo "After you complete the OAuth flow, you'll see a token starting with 'sk-ant-oat01-'"
+# Get OAuth token
+echo "Getting Claude OAuth token..."
 echo ""
-read -p "Press Enter to start the OAuth setup..."
-
-# Run claude setup-token
-claude setup-token
-
-# After setup-token completes (it clears screen), prompt for token
+echo "If you don't have a token yet:"
+echo "  1. Open a NEW terminal window"
+echo "  2. Run: claude setup-token"
+echo "  3. Complete the OAuth flow in your browser"
+echo "  4. Copy the token (starts with sk-ant-oat01-)"
+echo "  5. Return here and paste it below"
 echo ""
-echo "OAuth setup complete!"
+echo "If you already have a token, paste it below:"
 echo ""
-echo "Please paste your OAuth token below (starts with sk-ant-oat01-):"
-read -r OAUTH_TOKEN
+read -p "OAuth Token (sk-ant-oat01-...): " OAUTH_TOKEN
 
 # Validate token format
 if [[ ! $OAUTH_TOKEN =~ ^sk-ant-oat01- ]]; then
