@@ -5,7 +5,32 @@ echo "Installing Claude Agent API..."
 
 # Download files
 mkdir -p claude-agent-api && cd claude-agent-api
-curl -sSL -O https://raw.githubusercontent.com/zenjabba/claude-agent-api/main/docker-compose.yml
+
+# Create docker-compose.yml that uses pre-built image
+cat > docker-compose.yml <<'EOF'
+services:
+  claude-agent:
+    image: zenjabba/claude-agent-api:latest
+    container_name: claude-agent-api
+    ports:
+      - "8787:8787"
+    volumes:
+      - claude-data:/data
+    env_file:
+      - .env
+    environment:
+      - PORT=8787
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8787/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  claude-data:
+EOF
+
 mkdir -p data
 docker pull zenjabba/claude-agent-api:latest
 
