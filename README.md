@@ -1,110 +1,123 @@
 # Claude Agent API
 
-A simple HTTP API server for Claude that runs anywhere - Docker, systemd, or standalone Python.
+Simple HTTP API server for Claude, distributed as a Docker container.
+
+[![Docker Pulls](https://img.shields.io/docker/pulls/zenjabba/claude-agent-api)](https://hub.docker.com/r/zenjabba/claude-agent-api)
+[![Docker Image Size](https://img.shields.io/docker/image-size/zenjabba/claude-agent-api)](https://hub.docker.com/r/zenjabba/claude-agent-api)
+[![Build Status](https://github.com/zenjabba/claude-agent-api/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/zenjabba/claude-agent-api/actions)
 
 ## Features
 
-- 🔄 Automatic token refresh (OAuth tokens auto-renew)
-- 🐳 Docker support with one-line deployment
-- 🔒 Secure token storage
-- 🚀 Simple REST API for Claude interactions
-- 📦 No complex dependencies - just Python
+- 🐳 **Docker-only** - Simple, consistent deployment
+- 🔄 **Auto-refresh** - OAuth tokens renew automatically
+- 🔒 **Secure** - Tokens stored in Docker volumes
+- 🚀 **Simple API** - RESTful endpoints for Claude
+- 🏗️ **Multi-arch** - Supports AMD64 and ARM64
 
-## Quick Start (Docker)
+## Quick Start
 
 ```bash
-# Clone and run
-git clone https://github.com/zenjabba/claude-agent-api.git
-cd claude-agent-api
+# Option 1: Using docker-compose (recommended)
+curl -O https://raw.githubusercontent.com/zenjabba/claude-agent-api/main/docker-compose.yml
+curl -O https://raw.githubusercontent.com/zenjabba/claude-agent-api/main/docker-setup.sh
+chmod +x docker-setup.sh
 ./docker-setup.sh
+
+# Option 2: Direct Docker run
+docker run -it --rm \
+  -v claude-data:/data \
+  -p 8787:8787 \
+  zenjabba/claude-agent-api:latest \
+  python3 oauth_setup.py
+
+# Then run the container
+docker run -d \
+  -v claude-data:/data \
+  -p 8787:8787 \
+  --name claude-agent \
+  --restart unless-stopped \
+  zenjabba/claude-agent-api:latest
 ```
 
-That's it! The script will guide you through OAuth setup and start the API server.
+## API Usage
 
-## API Endpoints
-
-- `GET /health` - Health check
-- `POST /query` - Send queries to Claude
-  ```json
-  {
-    "query": "Your question here"
-  }
-  ```
-- `POST /execute` - Execute system commands (optional)
-  ```json
-  {
-    "command": "ls -la"
-  }
-  ```
-
-## Installation Methods
-
-### Method 1: Docker (Recommended)
-
+### Health Check
 ```bash
-# Using docker-compose
-docker-compose up -d
-
-# Or using the setup script
-./docker-setup.sh
+curl http://localhost:8787/health
 ```
 
-### Method 2: Standalone Python
-
+### Query Claude
 ```bash
-# Install dependencies
-pip3 install -r requirements.txt
-
-# Run OAuth setup
-./oauth_setup.py
-
-# Start server
-python3 server.py
+curl -X POST http://localhost:8787/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What is the meaning of life?"}'
 ```
 
-### Method 3: Systemd Service
-
+### Execute Command (Optional)
 ```bash
-# Complete setup with systemd
-sudo ./setup.sh
+curl -X POST http://localhost:8787/execute \
+  -H "Content-Type: application/json" \
+  -d '{"command": "date"}'
 ```
 
 ## OAuth Setup
 
-The API requires Claude OAuth tokens. During setup, you'll choose between:
+On first run, you'll need to authenticate with Claude. The setup script provides two options:
 
-1. **Manual OAuth Flow** - Get a URL to authenticate on any device
-2. **Remote Setup** - Copy tokens from another machine
+1. **Manual OAuth Flow** - Get a URL, authenticate on any device, paste code back
+2. **Remote Setup** - Copy existing tokens from another installation
 
-Both methods support automatic token refresh.
+Tokens are stored in a Docker volume and automatically refresh.
+
+## Docker Compose
+
+```yaml
+version: '3.8'
+
+services:
+  claude-agent:
+    image: zenjabba/claude-agent-api:latest
+    container_name: claude-agent-api
+    ports:
+      - "8787:8787"
+    volumes:
+      - claude-data:/data
+    restart: unless-stopped
+
+volumes:
+  claude-data:
+```
 
 ## Environment Variables
 
 - `PORT` - API port (default: 8787)
-- `CLAUDE_CODE_OAUTH_TOKEN` - Your Claude OAuth token
 
-## Docker Hub
+## Updating
 
 ```bash
-# Pull directly from Docker Hub
-docker pull zenjabba/claude-agent-api:latest
+# Pull latest image
+docker-compose pull
 
-# Run with volume for token persistence
-docker run -d \
-  -p 8787:8787 \
-  -v claude-data:/data \
-  --name claude-agent \
-  zenjabba/claude-agent-api:latest
+# Restart container
+docker-compose up -d
 ```
 
-## Development
+## Building from Source
 
 ```bash
-# Build Docker image
+# Clone repository
+git clone https://github.com/zenjabba/claude-agent-api.git
+cd claude-agent-api
+
+# Build image
 docker build -t claude-agent-api .
 
-# Run tests
-./test.sh
+# Run with local image
+docker run -d \
+  -v claude-data:/data \
+  -p 8787:8787 \
+  --name claude-agent \
+  claude-agent-api
 ```
 
 ## License

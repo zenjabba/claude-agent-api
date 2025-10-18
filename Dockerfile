@@ -11,9 +11,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY server.py .
 COPY token_manager.py .
 COPY start_with_refresh.py .
+COPY oauth_setup.py .
+COPY docker-entrypoint.sh .
 
 # Create directory for tokens
-RUN mkdir -p /data
+RUN mkdir -p /data && chmod +x docker-entrypoint.sh
 
 # Expose port
 EXPOSE 8787
@@ -29,5 +31,5 @@ VOLUME ["/data"]
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:8787/health')"
 
-# Run the application with token refresh
-CMD ["python3", "start_with_refresh.py"]
+# Set entrypoint
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
