@@ -276,17 +276,24 @@ class ClaudeAPIHandler(BaseHTTPRequestHandler):
             })
         elif self.path.startswith('/usage'):
             self._handle_usage_report()
+        elif self.path == '/favicon.ico':
+            self._send_favicon()
         elif self.path == '/':
-            self._send_json_response(200, {
-                'name': 'Claude Agent API',
-                'version': '1.0.0',
-                'endpoints': {
-                    'GET /health': 'Health check',
-                    'POST /query': 'Send queries to Claude (requires api_key)',
-                    'GET /usage?api_key=XXX': 'View usage statistics'
-                },
-                'documentation': 'https://github.com/zenjabba/claude-agent-api'
-            })
+            # Check Accept header for HTML vs JSON
+            accept = self.headers.get('Accept', '')
+            if 'text/html' in accept:
+                self._send_html_response()
+            else:
+                self._send_json_response(200, {
+                    'name': 'Claude Agent API',
+                    'version': '1.0.0',
+                    'endpoints': {
+                        'GET /health': 'Health check',
+                        'POST /query': 'Send queries to Claude (requires api_key)',
+                        'GET /usage?api_key=XXX': 'View usage statistics'
+                    },
+                    'documentation': 'https://github.com/zenjabba/claude-agent-api'
+                })
         else:
             self._send_json_response(404, {'error': 'Not found'})
 
@@ -463,6 +470,105 @@ class ClaudeAPIHandler(BaseHTTPRequestHandler):
         except Exception as e:
             logger.error(f"Error generating usage report: {e}")
             self._send_json_response(500, {'error': str(e)})
+
+    def _send_favicon(self):
+        """Send a simple SVG favicon"""
+        # Simple Claude 'C' icon as SVG
+        favicon_svg = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" fill="#7C3AED"/>
+            <text x="50" y="72" font-family="Arial" font-size="60" font-weight="bold"
+                  fill="white" text-anchor="middle">C</text>
+        </svg>'''
+        self.send_response(200)
+        self.send_header('Content-Type', 'image/svg+xml')
+        self.send_header('Cache-Control', 'public, max-age=86400')
+        self.end_headers()
+        self.wfile.write(favicon_svg.encode('utf-8'))
+
+    def _send_html_response(self):
+        """Send HTML response with Open Graph tags for iMessage/social media"""
+        html = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Agent API</title>
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Claude Agent API">
+    <meta property="og:description" content="Simple HTTP API server for Claude with OAuth token support, API key authentication, and usage tracking.">
+    <meta property="og:url" content="https://claude.digitalmonks.org">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Claude Agent API">
+    <meta name="twitter:description" content="Simple HTTP API server for Claude with OAuth token support">
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #7C3AED; margin-top: 0; }
+        .endpoint {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #7C3AED;
+            border-radius: 4px;
+        }
+        code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        a { color: #7C3AED; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Claude Agent API</h1>
+        <p>Simple HTTP API server for Claude with OAuth token support, API key authentication, and usage tracking.</p>
+
+        <h2>Endpoints</h2>
+
+        <div class="endpoint">
+            <strong>GET /health</strong>
+            <p>Health check endpoint</p>
+        </div>
+
+        <div class="endpoint">
+            <strong>POST /query</strong>
+            <p>Send queries to Claude (requires <code>api_key</code> in request body)</p>
+        </div>
+
+        <div class="endpoint">
+            <strong>GET /usage?api_key=XXX</strong>
+            <p>View usage statistics for your API key</p>
+        </div>
+
+        <h2>Documentation</h2>
+        <p>View full documentation at <a href="https://github.com/zenjabba/claude-agent-api">GitHub</a></p>
+    </div>
+</body>
+</html>'''
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/html; charset=utf-8')
+        self.send_header('Cache-Control', 'public, max-age=300')
+        self.end_headers()
+        self.wfile.write(html.encode('utf-8'))
 
     def log_message(self, format, *args):
         logger.info("%s - %s" % (self.address_string(), format % args))
