@@ -276,7 +276,7 @@ class ClaudeAPIHandler(BaseHTTPRequestHandler):
             })
         elif self.path.startswith('/usage'):
             self._handle_usage_report()
-        elif self.path == '/favicon.ico':
+        elif self.path == '/favicon.ico' or self.path == '/apple-touch-icon.png' or self.path == '/apple-touch-icon-precomposed.png':
             self._send_favicon()
         elif self.path == '/':
             # Check Accept header for HTML vs JSON
