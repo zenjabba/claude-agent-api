@@ -12,7 +12,7 @@ curl -sSL https://raw.githubusercontent.com/zenjabba/claude-agent-api/main/insta
 
 ## Features
 
-- **Claude CLI Integration** - Uses official Claude CLI with OAuth tokens
+- **Claude CLI Integration** - Uses official Claude CLI with OAuth tokens (auto-renewal handled by CLI)
 - **API Key Protection** - Secure API key authentication
 - **Model Selection** - Choose from any Claude model (Haiku 4.5 default)
 - **Docker-only** - Simple, consistent deployment
@@ -292,9 +292,18 @@ Check logs:
 docker-compose logs
 ```
 
-### Token expired
+### Token issues
 
-Regenerate OAuth token:
+OAuth tokens are managed automatically by Claude CLI and should not expire. If you see authentication errors:
+
+1. Check that your token is correctly set in `.env`
+2. Verify Claude CLI is installed in the container
+3. Restart the container:
+```bash
+docker-compose restart
+```
+
+If issues persist, regenerate the token:
 ```bash
 claude setup-token
 # Update .env file with new token
