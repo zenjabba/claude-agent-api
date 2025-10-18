@@ -44,8 +44,9 @@ def main():
             print("-" * 120)
             for key, info in keys.items():
                 masked_key = key[:10] + '...' + key[-8:]
-                last_used = info.get('last_used', 'Never')
-                print(f"{masked_key:<50} {info['name']:<20} {info['created']:<25} {last_used:<25}")
+                last_used = info.get('last_used') or 'Never'
+                created = info.get('created') or info.get('created_at') or 'Unknown'
+                print(f"{masked_key:<50} {info['name']:<20} {created:<25} {last_used:<25}")
             print(f"\nTotal: {len(keys)} API key(s)")
 
     elif command == 'delete':

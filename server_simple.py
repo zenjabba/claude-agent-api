@@ -164,6 +164,7 @@ def list_api_keys():
             keys[row[0]] = {
                 'name': row[1],
                 'created': row[2],
+                'created_at': row[2],
                 'last_used': row[3],
                 'is_active': bool(row[4])
             }
