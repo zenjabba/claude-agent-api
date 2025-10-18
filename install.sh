@@ -10,7 +10,7 @@ mkdir -p data
 docker pull zenjabba/claude-agent-api:latest
 
 echo ""
-echo "✓ Installation complete!"
+echo "Installation complete!"
 echo ""
 echo "To set up and start Claude Agent API:"
 echo ""

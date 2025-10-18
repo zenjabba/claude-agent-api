@@ -27,10 +27,11 @@ if os.path.exists('/data') and os.access('/data', os.W_OK):
 
 class HeadlessOAuthSetup:
     def __init__(self):
-        self.client_id = 'anthropic-oauth-cli'
+        # Use Claude's official OAuth client ID
+        self.client_id = '9d1c250a-e61b-44d9-88ed-5944d1962f5e'
         self.redirect_uri = 'http://localhost:8899/callback'
-        self.auth_endpoint = 'https://console.anthropic.com/oauth/authorize'
-        self.token_endpoint = 'https://console.anthropic.com/oauth/token'
+        self.auth_endpoint = 'https://claude.ai/oauth/authorize'
+        self.token_endpoint = 'https://claude.ai/api/oauth/token'
 
     def generate_pkce(self):
         """Generate PKCE verifier and challenge"""
@@ -103,7 +104,7 @@ class HeadlessOAuthSetup:
         }
         
         manager.save_tokens(tokens)
-        print("\n✓ Tokens saved successfully!")
+        print("\nTokens saved successfully!")
         print(f"  Access token expires at: {tokens['expires_at']}")
         if tokens['refresh_token']:
             print("  Refresh token saved for automatic renewal")
@@ -148,7 +149,7 @@ class HeadlessOAuthSetup:
         if not code:
             raise Exception("No authorization code found in input")
         
-        print("\n✓ Authorization code received!")
+        print("\nAuthorization code received!")
         print("  Exchanging for tokens...")
         
         tokens = self.exchange_code_for_token(code, verifier)
@@ -176,7 +177,7 @@ class HeadlessOAuthSetup:
         vars_file = Path('.vars')
         
         if token_file.exists() and vars_file.exists():
-            print("\n✓ Token files found!")
+            print("\nToken files found!")
             
             # Set proper permissions
             os.chmod(token_file, 0o600)
@@ -191,7 +192,7 @@ class HeadlessOAuthSetup:
                 print("  Refresh token available for automatic renewal")
             return True
         else:
-            print("\n✗ Token files not found")
+            print("\nToken files not found")
             print("  Expected files:")
             print("  - .tokens.json")
             print("  - .vars")
@@ -210,11 +211,11 @@ class HeadlessOAuthSetup:
         try:
             if choice == '1':
                 self.manual_oauth_flow()
-                print("\n✓ OAuth setup complete with auto-refresh enabled!")
+                print("\nOAuth setup complete with auto-refresh enabled!")
             elif choice == '2':
                 success = self.remote_setup_instructions()
                 if success:
-                    print("\n✓ Remote setup complete!")
+                    print("\nRemote setup complete!")
             elif choice == '3':
                 print("\nExiting...")
                 sys.exit(0)
@@ -222,7 +223,7 @@ class HeadlessOAuthSetup:
                 print("\nInvalid choice")
                 sys.exit(1)
         except Exception as e:
-            print(f"\n✗ Setup failed: {e}")
+            print(f"\nSetup failed: {e}")
             sys.exit(1)
 
 def main():

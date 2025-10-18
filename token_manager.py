@@ -83,11 +83,11 @@ class TokenManager:
         
         print("Refreshing Claude OAuth token...")
         
-        url = 'https://console.anthropic.com/oauth/token'
+        url = 'https://claude.ai/api/oauth/token'
         data = {
             'grant_type': 'refresh_token',
-            'refresh_token': self.tokens['refresh_token'],
-            'client_id': 'anthropic-oauth-cli'
+            'refresh_token': self.tokens['refresh_token']
+            # Client ID not needed for refresh
         }
         
         try:
