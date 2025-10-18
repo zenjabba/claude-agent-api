@@ -19,6 +19,7 @@ RUN pip3 install --no-cache-dir -r requirements.txt --break-system-packages
 
 # Copy application files
 COPY server_simple.py .
+COPY manage_keys.py .
 
 # Create directory for data
 RUN mkdir -p /data

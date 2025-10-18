@@ -5,6 +5,7 @@ import sys
 import json
 import logging
 import subprocess
+import secrets
 from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime
@@ -12,6 +13,7 @@ from datetime import datetime
 # Configuration
 PORT = int(os.environ.get('PORT', 8787))
 TOKEN = os.environ.get('CLAUDE_CODE_OAUTH_TOKEN')
+API_KEYS_FILE = Path('/data/api_keys.json') if Path('/data').exists() else Path('api_keys.json')
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -50,6 +52,65 @@ def configure_claude_cli():
 
 # Configure on startup
 configure_claude_cli()
+
+# API Key management
+def load_api_keys():
+    """Load API keys from file"""
+    if API_KEYS_FILE.exists():
+        try:
+            with open(API_KEYS_FILE, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            logger.error(f'Error loading API keys: {e}')
+    return {}
+
+def save_api_keys(keys):
+    """Save API keys to file"""
+    try:
+        API_KEYS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(API_KEYS_FILE, 'w') as f:
+            json.dump(keys, f, indent=2)
+        return True
+    except Exception as e:
+        logger.error(f'Error saving API keys: {e}')
+        return False
+
+def generate_api_key(name):
+    """Generate a new API key"""
+    api_key = f"sk-{secrets.token_urlsafe(32)}"
+    keys = load_api_keys()
+    keys[api_key] = {
+        'name': name,
+        'created': datetime.now().isoformat(),
+        'last_used': None
+    }
+    if save_api_keys(keys):
+        return api_key
+    return None
+
+def validate_api_key(api_key):
+    """Validate an API key"""
+    keys = load_api_keys()
+    if api_key in keys:
+        # Update last used timestamp
+        keys[api_key]['last_used'] = datetime.now().isoformat()
+        save_api_keys(keys)
+        return True
+    return False
+
+def list_api_keys():
+    """List all API keys"""
+    keys = load_api_keys()
+    return keys
+
+def delete_api_key(api_key):
+    """Delete an API key"""
+    keys = load_api_keys()
+    if api_key in keys:
+        del keys[api_key]
+        save_api_keys(keys)
+        return True
+    return False
 
 # Load default model from config
 DEFAULT_MODEL = 'claude-haiku-4-5'
@@ -101,6 +162,17 @@ class ClaudeAPIHandler(BaseHTTPRequestHandler):
     def _handle_query(self):
         try:
             body = self._read_body()
+
+            # Validate API key
+            api_key = body.get('api_key')
+            if not api_key:
+                self._send_json_response(401, {'error': 'API key required', 'message': 'Include "api_key" in request body'})
+                return
+
+            if not validate_api_key(api_key):
+                self._send_json_response(403, {'error': 'Invalid API key'})
+                return
+
             prompt = body.get('query') or body.get('prompt')
 
             if not prompt:
