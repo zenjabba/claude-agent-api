@@ -1,16 +1,18 @@
 services:
   claude-agent:
-    image: zenjabba/claude-agent-api:latest
+    build: .
     container_name: claude-agent-api
     ports:
       - "8787:8787"
     volumes:
       - claude-data:/data
+    env_file:
+      - .env
     environment:
       - PORT=8787
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8787/health')"]
+      test: ["CMD", "curl", "-f", "http://localhost:8787/health"]
       interval: 30s
       timeout: 3s
       retries: 3

@@ -30,6 +30,7 @@ class HeadlessOAuthSetup:
         headers = {
             'Authorization': f"Bearer {token}",
             'anthropic-version': '2023-06-01',
+            'anthropic-beta': 'oauth-2025-04-20',
             'Content-Type': 'application/json'
         }
         

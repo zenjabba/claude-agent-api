@@ -1,21 +1,27 @@
-FROM python:3.11-slim
+FROM node:20-slim
+
+# Install Python for the server
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
 
-# Install dependencies
+# Install Claude CLI globally
+RUN npm install -g @anthropic-ai/claude-code
+
+# Install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt --break-system-packages
 
 # Copy application files
-COPY server.py .
-COPY token_manager.py .
-COPY start_with_refresh.py .
-COPY oauth_setup.py .
-COPY docker-entrypoint.sh .
+COPY server_simple.py .
 
-# Create directory for tokens
-RUN mkdir -p /data && chmod +x docker-entrypoint.sh
+# Create directory for data
+RUN mkdir -p /data
 
 # Expose port
 EXPOSE 8787
@@ -23,13 +29,14 @@ EXPOSE 8787
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PORT=8787
+ENV PATH="/usr/local/bin:${PATH}"
 
-# Volume for persistent token storage
+# Volume for persistent data storage
 VOLUME ["/data"]
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:8787/health')"
+  CMD curl -f http://localhost:8787/health || exit 1
 
-# Set entrypoint
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
+# Start the server
+CMD ["python3", "server_simple.py"]
