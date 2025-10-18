@@ -246,12 +246,16 @@ if config_file.exists():
 
 class ClaudeAPIHandler(BaseHTTPRequestHandler):
     def _send_json_response(self, status_code, data):
-        response = json.dumps(data)
-        self.send_response(status_code)
-        self.send_header('Content-Type', 'application/json')
-        self.send_header('Content-Length', str(len(response)))
-        self.end_headers()
-        self.wfile.write(response.encode('utf-8'))
+        try:
+            response = json.dumps(data)
+            self.send_response(status_code)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Length', str(len(response)))
+            self.end_headers()
+            self.wfile.write(response.encode('utf-8'))
+        except (BrokenPipeError, ConnectionResetError):
+            # Client disconnected before response was sent - ignore
+            pass
 
     def _read_body(self):
         content_length = int(self.headers.get('Content-Length', 0))
