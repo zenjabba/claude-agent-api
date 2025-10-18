@@ -1,6 +1,6 @@
 services:
   claude-agent:
-    build: .
+    image: zenjabba/claude-agent-api:latest
     container_name: claude-agent-api
     ports:
       - "8787:8787"
